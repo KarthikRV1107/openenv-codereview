@@ -283,7 +283,7 @@ A perfect agent would score ~0.95 on all tasks. These baseline scores leave sign
 
 **URL**: https://huggingface.co/spaces/Karthikrv/openenv-codereview
 
-**Team**: CodeBlockers
+**Team**: CodeBlockers 
 
 ---
 
