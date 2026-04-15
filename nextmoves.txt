@@ -1,0 +1,709 @@
+lets trim our project for this 
+PROBLEM STATEMENT
+
+Round 1 — Problem Statement
+
+The Task
+S
+Build a complete, real-world OpenEnv environment that an AI agent can learn from through the standard  step() / reset() / state()  API.
+
+Key Requirements at a Glance
+
+Must simulate a real-world task (not games or toys)
+
+Implement full OpenEnv spec: typed models, step()/reset()/state(), openenv.yaml
+
+Minimum 3 tasks with agent graders (easy → medium → hard, scores 0.0–1.0)
+
+Meaningful reward function with partial progress signals
+
+Baseline inference script with reproducible scores
+
+Deploy to Hugging Face Spaces + working Dockerfile
+
+README with environment description, action/observation spaces, setup instructions
+
+Functional Requirements
+
+Real-world task simulation
+
+The environment must simulate a task humans actually do. Not games, not toys. Examples: email triage, code review, data cleaning, scheduling, customer support, content moderation.
+
+OpenEnv spec compliance
+
+Implement the full OpenEnv interface: typed Observation, Action, and Reward Pydantic models. step(action) → returns observation, reward, done, info. reset() → returns initial observation. state() → returns current state. openenv.yaml with metadata. Tested via openenv validate.
+
+Minimum 3 tasks with agent graders
+
+Each task defines a concrete objective an agent must accomplish, with a programmatic grader that scores performance (0.0–1.0). Tasks should range: easy → medium → hard. Graders must have clear, deterministic success/failure criteria.
+
+Meaningful reward function
+
+Provides signal over the full trajectory (not just binary end-of-episode). Rewards partial progress toward task completion. Penalizes clearly undesirable behavior (e.g. infinite loops, destructive actions).
+
+Baseline inference script
+
+Uses the OpenAI API client to run a model against the environment. Reads API credentials from environment variables (OPENAI_API_KEY). Produces a reproducible baseline score on all 3 tasks.
+
+Detailed Requirements
+
+Non-Functional Requirements
+
+Deploys to a Hugging Face Space
+
+Environment must run as a containerized HF Space tagged with openenv.
+
+Containerized execution
+
+Must include a working Dockerfile. The environment should start cleanly with docker build + docker run.
+
+Documentation
+
+README must include: environment description and motivation, action and observation space definitions, task descriptions with expected difficulty, setup and usage instructions, baseline scores.
+
+Parameter
+
+Weight
+
+Description
+
+Real-world utility
+
+30%
+
+Does the environment model a genuine task? Would someone actually use this to train or evaluate agents?
+
+Task & grader quality
+
+25%
+
+Are tasks well-defined with clear objectives? Do graders accurately and fairly measure success? Meaningful difficulty progression?
+
+Environment design
+
+20%
+
+Clean state management, sensible action/observation spaces, good reward shaping, proper episode boundaries.
+
+Code quality & spec compliance
+
+15%
+
+Follows OpenEnv spec, clean project structure, typed models, documented, tested, Dockerfile works.
+
+Creativity & novelty
+
+10%
+
+Novel problem domain, interesting mechanics, clever reward design, original approach.
+
+Scoring Breakdown
+
+Real-world utility (30%)
+
+•  0–5: Toy/artificial problem with no practical application
+
+•  6–15: Valid domain but shallow modeling of the real task
+
+•  16–25: Good domain modeling, would be useful for agent evaluation
+
+•  26–30: Excellent — fills a real gap, immediate value for the RL/agent community
+
+Task & grader quality (25%)
+
+•  3+ tasks with difficulty range?
+
+•  Graders produce scores between 0.0–1.0?
+
+•  Graders deterministic and reproducible?
+
+•  Hard task genuinely challenges frontier models?
+
+Environment design (20%)
+
+•  reset() produces clean state?
+
+•  Action/observation types well-designed and documented?
+
+•  Reward function provides useful varying signal (not just sparse)?
+
+•  Episode boundaries sensible?
+
+Code quality & spec compliance (15%)
+
+•  openenv validate passes?
+
+•  docker build && docker run works?
+
+•  HF Space deploys and responds?
+
+•  Baseline script runs and reproduces scores?
+
+Creativity & novelty (10%)
+
+•  Domain we haven’t seen in OpenEnv before?
+
+•  Reward design has interesting properties?
+
+•  Clever mechanics that make the environment engaging?
+
+Evaluation Criteria
+
+Phase 1: Automated Validation
+
+Pass/fail gate — HF Space deploys, OpenEnv spec compliance, Dockerfile builds, baseline reproduces, 3+ tasks with graders.
+
+Phase 2: Agentic Evaluation
+
+Scored — baseline agent re-run, standard Open LLM agent (e.g. Nemotron 3 Super) run against all environments, score variance check.
+
+Phase 3: Human Review
+
+Top submissions reviewed by Meta and Hugging Face engineers for real-world utility, creativity, and exploit checks.
+
+Disqualification Criteria
+
+Environment does not deploy or respond
+
+Plagiarized or trivially modified existing environments
+
+Graders that always return the same score
+
+No baseline inference script
+
+How Judging works
+
+Pre-Submission Checklist  — all must pass or you're disqualified
+
+HF Space deploys
+
+Automated ping to the Space URL — must return 200 and respond to reset()
+
+OpenEnv spec compliance
+
+Validate openenv.yaml, typed models, step()/reset()/state() endpoints
+
+Dockerfile builds
+
+Automated docker build on the submitted repo
+
+Baseline reproduces
+
+Run the submitted inference script — must complete without error and produce scores
+
+3+ tasks with graders
+
+Enumerate tasks, run each grader, verify scores in 0.0–1.0 range
+
+Mandatory Additional Instructions
+
+Before submitting, ensure the following variables are defined in your environment configuration:
+
+API_BASE_URL   The API endpoint for the LLM.
+
+MODEL_NAME     The model identifier to use for inference.
+
+HF_TOKEN       Your Hugging Face / API key.
+
+The inference script must be named `inference.py` and placed in the root directory of the project
+
+Participants must use OpenAI Client for all LLM calls using above variables
+
+Infra Restrictions
+
+Runtime of inference script should be less than 20min 
+
+Make sure your env and inference can run on a machine with vcpu=2, memory=8gb
+
+Validator
+
+Run the pre-submission validation script before submitting
+"""
+Inference Script Example
+===================================
+MANDATORY
+- Before submitting, ensure the following variables are defined in your environment configuration:
+    API_BASE_URL   The API endpoint for the LLM.
+    MODEL_NAME     The model identifier to use for inference.
+    HF_TOKEN       Your Hugging Face / API key.
+    LOCAL_IMAGE_NAME The name of the local image to use for the environment if you are using from_docker_image()
+                     method
+
+- Defaults are set only for API_BASE_URL and MODEL_NAME 
+    (and should reflect your active inference setup):
+    API_BASE_URL = os.getenv("API_BASE_URL", "<your-active-endpoint>")
+    MODEL_NAME = os.getenv("MODEL_NAME", "<your-active-model>")
+    
+- The inference script must be named `inference.py` and placed in the root directory of the project
+- Participants must use OpenAI Client for all LLM calls using above variables
+
+STDOUT FORMAT
+- The script must emit exactly three line types to stdout, in this order:
+
+    [START] task=<task_name> env=<benchmark> model=<model_name>
+    [STEP]  step=<n> action=<action_str> reward=<0.00> done=<true|false> error=<msg|null>
+    [END]   success=<true|false> steps=<n> rewards=<r1,r2,...,rn>
+
+  Rules:
+    - One [START] line at episode begin.
+    - One [STEP] line per step, immediately after env.step() returns.
+    - One [END] line after env.close(), always emitted (even on exception).
+    - reward and rewards are formatted to 2 decimal places.
+    - done and success are lowercase booleans: true or false.
+    - error is the raw last_action_error string, or null if none.
+    - All fields on a single line with no newlines within a line.
+
+  Example:
+    [START] task=click-test env=miniwob model=Qwen3-VL-30B
+    [STEP] step=1 action=click('123') reward=0.00 done=false error=null
+    [STEP] step=2 action=fill('456','text') reward=0.00 done=false error=null
+    [STEP] step=3 action=click('789') reward=1.00 done=true error=null
+    [END] success=true steps=3 rewards=0.00,0.00,1.00
+"""
+
+import os
+import re
+import base64
+import textwrap
+from io import BytesIO
+from typing import List, Optional, Dict
+
+from openai import OpenAI
+import numpy as np
+from PIL import Image
+
+from browsergym_env import BrowserGymAction, BrowserGymEnv
+
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
+MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen3-VL-30B-A3B-Instruct:novita"
+LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME")
+TASK_NAME = os.getenv("BROWSERGYM_TASK_NAME", "unknown-task")
+BENCHMARK = os.getenv("BROWSERGYM_BENCHMARK", "unknown-env")
+MAX_STEPS = 8
+MAX_DOM_CHARS = 3500
+TEMPERATURE = 0.2
+MAX_TOKENS = 200
+FALLBACK_ACTION = "noop()"
+
+DEBUG = True
+ACTION_PREFIX_RE = re.compile(
+    r"^(action|next action)\s*[:\-]\s*",
+    re.IGNORECASE,
+)
+ACTION_PATTERN = re.compile(r"[A-Za-z_]+\s*\(.*\)", re.DOTALL)
+
+
+SYSTEM_PROMPT = textwrap.dedent(
+    """
+    You control a web browser through BrowserGym.
+    Reply with exactly one action string.
+    The action must be a valid BrowserGym command such as:
+    - noop()
+    - click('<BID>')
+    - type('selector', 'text to enter')
+    - fill('selector', 'text to enter')
+    - send_keys('Enter')
+    - scroll('down')
+    Use single quotes around string arguments.
+    When clicking, use the BrowserGym element IDs (BIDs) listed in the user message.
+    If you are unsure, respond with noop().
+    Do not include explanations or additional text.
+    """
+).strip()
+
+
+def log_start(task: str, env: str, model: str) -> None:
+    print(f"[START] task={task} env={env} model={model}", flush=True)
+
+
+def log_step(step: int, action: str, reward: float, done: bool, error: Optional[str]) -> None:
+    error_val = error if error else "null"
+    done_val = str(done).lower()
+    print(
+        f"[STEP] step={step} action={action} reward={reward:.2f} done={done_val} error={error_val}",
+        flush=True,
+    )
+
+
+def log_end(success: bool, steps: int, rewards: List[float]) -> None:
+    rewards_str = ",".join(f"{r:.2f}" for r in rewards)
+    print(f"[END] success={str(success).lower()} steps={steps} rewards={rewards_str}", flush=True)
+
+
+def build_history_lines(history: List[str]) -> str:
+    if not history:
+        return "None"
+    return "\n".join(history[-4:])
+
+
+def extract_screenshot_uri(observation) -> Optional[str]:
+    if observation.screenshot is None:
+        return None
+    screen_array = np.array(observation.screenshot, dtype=np.uint8)
+    image = Image.fromarray(screen_array)
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    data_uri = base64.b64encode(buffer.read()).decode("utf-8")
+    return f"data:image/png;base64,{data_uri}"
+
+
+def extract_clickable_elements(observation) -> List[Dict[str, str]]:
+    """Collect BrowserGym element IDs that can be clicked."""
+
+    metadata = getattr(observation, "metadata", {}) or {}
+    obs_dict = metadata.get("browsergym_obs", {}) or {}
+    extra_props = obs_dict.get("extra_element_properties", {}) or {}
+
+    clickables: List[Dict[str, str]] = []
+    for bid, props in extra_props.items():
+        if not props.get("clickable"):
+            continue
+
+        bbox = props.get("bbox") or []
+        bbox_str = ", ".join(bbox) if bbox else "?"
+        clickables.append(
+            {
+                "bid": str(bid),
+                "bbox": bbox_str,
+            }
+        )
+
+    clickables.sort(key=lambda item: item["bid"])
+    return clickables
+
+
+def build_user_prompt(step: int, observation, history: List[str]) -> str:
+    goal = observation.goal or "(not provided)"
+    url = observation.url or "(unknown)"
+    error_note = "Yes" if observation.last_action_error else "No"
+
+    clickables = extract_clickable_elements(observation)
+    if clickables:
+        actions_hint = "\n".join(
+            f"    - {item['bid']} (bbox: {item['bbox']})" for item in clickables
+        )
+    else:
+        actions_hint = "    (none detected)"
+
+    prompt = textwrap.dedent(
+        f"""
+        Step: {step}
+        Goal: {goal}
+        Current URL: {url}
+        Previous steps:
+        {build_history_lines(history)}
+        Last action error: {error_note}
+        Available clickable element IDs: {actions_hint}
+        Reply with exactly one BrowserGym action string.
+        """
+    ).strip()
+    return prompt
+
+
+def parse_model_action(response_text: str) -> str:
+    if not response_text:
+        return FALLBACK_ACTION
+
+    lines = response_text.splitlines()
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line:
+            continue
+        line = ACTION_PREFIX_RE.sub("", line)
+        match = ACTION_PATTERN.search(line)
+        if match:
+            action = match.group(0).strip()
+            action = re.sub(r"\s+", " ", action)
+            return action
+
+    match = ACTION_PATTERN.search(response_text)
+    if match:
+        action = match.group(0).strip()
+        action = re.sub(r"\s+", " ", action)
+        return action
+
+    return FALLBACK_ACTION
+
+
+def main() -> None:
+    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+
+    env = BrowserGymEnv.from_docker_image(
+        image=LOCAL_IMAGE_NAME,
+        env_vars={
+            "BROWSERGYM_BENCHMARK": BENCHMARK,
+            "BROWSERGYM_TASK_NAME": TASK_NAME,
+        },
+    )
+
+    history: List[str] = []
+    rewards: List[float] = []
+    steps_taken = 0
+    success = False
+
+    log_start(task=TASK_NAME, env=BENCHMARK, model=MODEL_NAME or "unknown")
+
+    try:
+        result = env.reset()
+        observation = result.observation
+
+        for step in range(1, MAX_STEPS + 1):
+            if result.done:
+                break
+
+            user_prompt = build_user_prompt(step, observation, history)
+            user_content = [{"type": "text", "text": user_prompt}]
+            screenshot_uri = extract_screenshot_uri(observation)
+            if screenshot_uri:
+                user_content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": screenshot_uri},
+                    }
+                )
+
+            messages = [
+                {
+                    "role": "system",
+                    "content": [{"type": "text", "text": SYSTEM_PROMPT}],
+                },
+                {
+                    "role": "user",
+                    "content": user_content,
+                },
+            ]
+
+            try:
+                completion = client.chat.completions.create(
+                    model=MODEL_NAME,
+                    messages=messages,
+                    temperature=TEMPERATURE,
+                    max_tokens=MAX_TOKENS,
+                    stream=False,
+                )
+                response_text = completion.choices[0].message.content or ""
+            except Exception as exc:  # noqa: BLE001
+                response_text = FALLBACK_ACTION
+                if DEBUG:
+                    print(f"[DEBUG] Model request failed: {exc}", flush=True)
+
+            action_str = parse_model_action(response_text)
+            result = env.step(BrowserGymAction(action_str=action_str))
+            observation = result.observation
+
+            reward = result.reward or 0.0
+            error = observation.last_action_error or None
+            done = result.done
+
+            rewards.append(reward)
+            steps_taken = step
+
+            log_step(step=step, action=action_str, reward=reward, done=done, error=error)
+
+            history_line = f"Step {step}: {action_str} -> reward {reward:+.2f}"
+            if error:
+                history_line += f" ERROR"
+            history.append(history_line)
+
+            if done:
+                success = reward > 0.0
+                break
+
+        else:
+            # Exhausted MAX_STEPS without done=true
+            success = False
+
+    finally:
+        env.close()
+        log_end(success=success, steps=steps_taken, rewards=rewards)
+
+
+if __name__ == "__main__":
+    main()
+#!/usr/bin/env bash
+#
+# validate-submission.sh — OpenEnv Submission Validator
+#
+# Checks that your HF Space is live, Docker image builds, and openenv validate passes.
+#
+# Prerequisites:
+#   - Docker:       https://docs.docker.com/get-docker/
+#   - openenv-core: pip install openenv-core
+#   - curl (usually pre-installed)
+#
+# Run:
+#   curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/main/scripts/validate-submission.sh | bash -s -- <ping_url> [repo_dir]
+#
+#   Or download and run locally:
+#     chmod +x validate-submission.sh
+#     ./validate-submission.sh <ping_url> [repo_dir]
+#
+# Arguments:
+#   ping_url   Your HuggingFace Space URL (e.g. https://your-space.hf.space)
+#   repo_dir   Path to your repo (default: current directory)
+#
+# Examples:
+#   ./validate-submission.sh https://my-team.hf.space
+#   ./validate-submission.sh https://my-team.hf.space ./my-repo
+#
+
+set -uo pipefail
+
+DOCKER_BUILD_TIMEOUT=600
+if [ -t 1 ]; then
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[1;33m'
+  BOLD='\033[1m'
+  NC='\033[0m'
+else
+  RED='' GREEN='' YELLOW='' BOLD='' NC=''
+fi
+
+run_with_timeout() {
+  local secs="$1"; shift
+  if command -v timeout &>/dev/null; then
+    timeout "$secs" "$@"
+  elif command -v gtimeout &>/dev/null; then
+    gtimeout "$secs" "$@"
+  else
+    "$@" &
+    local pid=$!
+    ( sleep "$secs" && kill "$pid" 2>/dev/null ) &
+    local watcher=$!
+    wait "$pid" 2>/dev/null
+    local rc=$?
+    kill "$watcher" 2>/dev/null
+    wait "$watcher" 2>/dev/null
+    return $rc
+  fi
+}
+
+portable_mktemp() {
+  local prefix="${1:-validate}"
+  mktemp "${TMPDIR:-/tmp}/${prefix}-XXXXXX" 2>/dev/null || mktemp
+}
+
+CLEANUP_FILES=()
+cleanup() { rm -f "${CLEANUP_FILES[@]+"${CLEANUP_FILES[@]}"}"; }
+trap cleanup EXIT
+
+PING_URL="${1:-}"
+REPO_DIR="${2:-.}"
+
+if [ -z "$PING_URL" ]; then
+  printf "Usage: %s <ping_url> [repo_dir]\n" "$0"
+  printf "\n"
+  printf "  ping_url   Your HuggingFace Space URL (e.g. https://your-space.hf.space)\n"
+  printf "  repo_dir   Path to your repo (default: current directory)\n"
+  exit 1
+fi
+
+if ! REPO_DIR="$(cd "$REPO_DIR" 2>/dev/null && pwd)"; then
+  printf "Error: directory '%s' not found\n" "${2:-.}"
+  exit 1
+fi
+PING_URL="${PING_URL%/}"
+export PING_URL
+PASS=0
+
+log()  { printf "[%s] %b\n" "$(date -u +%H:%M:%S)" "$*"; }
+pass() { log "${GREEN}PASSED${NC} -- $1"; PASS=$((PASS + 1)); }
+fail() { log "${RED}FAILED${NC} -- $1"; }
+hint() { printf "  ${YELLOW}Hint:${NC} %b\n" "$1"; }
+stop_at() {
+  printf "\n"
+  printf "${RED}${BOLD}Validation stopped at %s.${NC} Fix the above before continuing.\n" "$1"
+  exit 1
+}
+
+printf "\n"
+printf "${BOLD}========================================${NC}\n"
+printf "${BOLD}  OpenEnv Submission Validator${NC}\n"
+printf "${BOLD}========================================${NC}\n"
+log "Repo:     $REPO_DIR"
+log "Ping URL: $PING_URL"
+printf "\n"
+
+log "${BOLD}Step 1/3: Pinging HF Space${NC} ($PING_URL/reset) ..."
+
+CURL_OUTPUT=$(portable_mktemp "validate-curl")
+CLEANUP_FILES+=("$CURL_OUTPUT")
+HTTP_CODE=$(curl -s -o "$CURL_OUTPUT" -w "%{http_code}" -X POST \
+  -H "Content-Type: application/json" -d '{}' \
+  "$PING_URL/reset" --max-time 30 2>"$CURL_OUTPUT" || printf "000")
+
+if [ "$HTTP_CODE" = "200" ]; then
+  pass "HF Space is live and responds to /reset"
+elif [ "$HTTP_CODE" = "000" ]; then
+  fail "HF Space not reachable (connection failed or timed out)"
+  hint "Check your network connection and that the Space is running."
+  hint "Try: curl -s -o /dev/null -w '%%{http_code}' -X POST $PING_URL/reset"
+  stop_at "Step 1"
+else
+  fail "HF Space /reset returned HTTP $HTTP_CODE (expected 200)"
+  hint "Make sure your Space is running and the URL is correct."
+  hint "Try opening $PING_URL in your browser first."
+  stop_at "Step 1"
+fi
+
+log "${BOLD}Step 2/3: Running docker build${NC} ..."
+
+if ! command -v docker &>/dev/null; then
+  fail "docker command not found"
+  hint "Install Docker: https://docs.docker.com/get-docker/"
+  stop_at "Step 2"
+fi
+
+if [ -f "$REPO_DIR/Dockerfile" ]; then
+  DOCKER_CONTEXT="$REPO_DIR"
+elif [ -f "$REPO_DIR/server/Dockerfile" ]; then
+  DOCKER_CONTEXT="$REPO_DIR/server"
+else
+  fail "No Dockerfile found in repo root or server/ directory"
+  stop_at "Step 2"
+fi
+
+log "  Found Dockerfile in $DOCKER_CONTEXT"
+
+BUILD_OK=false
+BUILD_OUTPUT=$(run_with_timeout "$DOCKER_BUILD_TIMEOUT" docker build "$DOCKER_CONTEXT" 2>&1) && BUILD_OK=true
+
+if [ "$BUILD_OK" = true ]; then
+  pass "Docker build succeeded"
+else
+  fail "Docker build failed (timeout=${DOCKER_BUILD_TIMEOUT}s)"
+  printf "%s\n" "$BUILD_OUTPUT" | tail -20
+  stop_at "Step 2"
+fi
+
+log "${BOLD}Step 3/3: Running openenv validate${NC} ..."
+
+if ! command -v openenv &>/dev/null; then
+  fail "openenv command not found"
+  hint "Install it: pip install openenv-core"
+  stop_at "Step 3"
+fi
+
+VALIDATE_OK=false
+VALIDATE_OUTPUT=$(cd "$REPO_DIR" && openenv validate 2>&1) && VALIDATE_OK=true
+
+if [ "$VALIDATE_OK" = true ]; then
+  pass "openenv validate passed"
+  [ -n "$VALIDATE_OUTPUT" ] && log "  $VALIDATE_OUTPUT"
+else
+  fail "openenv validate failed"
+  printf "%s\n" "$VALIDATE_OUTPUT"
+  stop_at "Step 3"
+fi
+
+printf "\n"
+printf "${BOLD}========================================${NC}\n"
+printf "${GREEN}${BOLD}  All 3/3 checks passed!${NC}\n"
+printf "${GREEN}${BOLD}  Your submission is ready to submit.${NC}\n"
+printf "${BOLD}========================================${NC}\n"
+printf "\n"
+
+exit 0   

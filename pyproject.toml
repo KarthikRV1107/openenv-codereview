@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "incident_ops_env"
+version = "1.0.0"
+description = "An OpenEnv environment for training AI agents on real-world SRE incident response tasks"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "CodeBlockers" }]
+keywords = ["openenv", "rl", "incident-response", "sre", "agent", "reinforcement-learning"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "openenv-core>=0.1.0",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "pydantic>=2.7.0",
+    "openai>=1.30.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "httpx>=0.27"]
+
+[tool.setuptools.packages.find]
+include = ["server*", "models", "client"]
+
+[tool.setuptools]
+py-modules = []
+
+[project.scripts]
+server = "server.app:main"
